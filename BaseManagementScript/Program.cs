@@ -7,69 +7,69 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System;
+using System.Runtime.CompilerServices;
+using EmptyKeys.UserInterface.Generated.AtmBlockView_Bindings;
 using VRage.Collections;
 using VRage.Game.Components;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
+using VRage.Game.GUI.TextPanel;
 using VRageMath;
 
 namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
-        // This file contains your actual script.
-        //
-        // You can either keep all your code here, or you can create separate
-        // code files to make your program easier to navigate while coding.
-        //
-        // In order to add a new utility class, right-click on your project, 
-        // select 'New' then 'Add Item...'. Now find the 'Space Engineers'
-        // category under 'Visual C# Items' on the left hand side, and select
-        // 'Utility Class' in the main area. Name it in the box below, and
-        // press OK. This utility class will be merged in with your code when
-        // deploying your final script.
-        //
-        // You can also simply create a new utility class manually, you don't
-        // have to use the template if you don't want to. Just do so the first
-        // time to see what a utility class looks like.
+
+        private List<IMyCargoContainer> _containers = new List<IMyCargoContainer>();
+        private readonly IMyTextSurface _cargoTextPanel;
+        
 
         public Program()
         {
-            // The constructor, called only once every session and
-            // always before any other method is called. Use it to
-            // initialize your script. 
-            //     
-            // The constructor is optional and can be removed if not
-            // needed.
-            // 
-            // It's recommended to set RuntimeInfo.UpdateFrequency 
-            // here, which will allow your script to run itself without a 
-            // timer block.
+            //Set Update frequency to every 100th game tick
+            Runtime.UpdateFrequency = UpdateFrequency.Update100;
+            // get Blocks in constructor for better performance => reload after added container
+            GridTerminalSystem.GetBlocksOfType(_containers, block => block.IsSameConstructAs(Me));
+            _cargoTextPanel = GridTerminalSystem.GetBlockWithName("Cargo LCD") as IMyTextPanel;
+            _cargoTextPanel.ContentType = ContentType.TEXT_AND_IMAGE;
+
         }
 
         public void Save()
         {
-            // Called when the program needs to save its state. Use
-            // this method to save your state to the Storage field
-            // or some other means. 
-            // 
-            // This method is optional and can be removed if not
-            // needed.
+            
         }
 
         public void Main(string argument, UpdateType updateSource)
         {
-            // The main entry point of the script, invoked every time
-            // one of the programmable block's Run actions are invoked,
-            // or the script updates itself. The updateSource argument
-            // describes where the update came from. Be aware that the
-            // updateSource is a  bitfield  and might contain more than 
-            // one update type.
-            // 
-            // The method itself is required, but the arguments above
-            // can be removed if not needed.
+            ShowCargoCapacity();
         }
+
+        private void ShowCargoCapacity()
+        {
+
+        float totalMaxVolume = 0;
+        float totalCurrentVolume = 0;
+
+        _cargoTextPanel.WriteText("Cargo Capacity \n ------------------------ \n", false);
+            foreach (var container in _containers)
+            {
+                var name = container.CustomName;
+                var maxVolume = (float)container.GetInventory().MaxVolume*1000;
+                var currentVolume = (float)container.GetInventory().CurrentVolume*1000;
+
+                _cargoTextPanel.WriteText("\n" + name + ": " + currentVolume + " / " + maxVolume + " l", true);
+                totalMaxVolume += maxVolume;
+                totalCurrentVolume += currentVolume;
+            }
+           
+            _cargoTextPanel.WriteText(
+                "\n------------------------\n Total: " + totalCurrentVolume + " / " + totalMaxVolume + " l", true);
+        }
+
+
     }
 }
