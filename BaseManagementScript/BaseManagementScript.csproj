@@ -35,6 +35,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CargoModule.cs" />
+    <Compile Include="PowerModule.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Readme.cs" />

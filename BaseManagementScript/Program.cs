@@ -23,19 +23,17 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
 
-        private List<IMyCargoContainer> _containers = new List<IMyCargoContainer>();
-        private readonly IMyTextSurface _cargoTextPanel;
+        private readonly CargoModule _cargo;
+        private readonly PowerModule _power;
         
 
         public Program()
         {
             //Set Update frequency to every 100th game tick
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
-            // get Blocks in constructor for better performance => reload after added container
-            GridTerminalSystem.GetBlocksOfType(_containers, block => block.IsSameConstructAs(Me));
-            _cargoTextPanel = GridTerminalSystem.GetBlockWithName("Cargo LCD") as IMyTextPanel;
-            _cargoTextPanel.ContentType = ContentType.TEXT_AND_IMAGE;
-
+                        
+            _cargo = new CargoModule(GridTerminalSystem,Me);
+            _power = new PowerModule(GridTerminalSystem, Me);
         }
 
         public void Save()
@@ -45,31 +43,13 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            ShowCargoCapacity();
+            _cargo.CheckCargoCapacity();
+            _power.CheckBatteryCapacity();
+            _power.CheckPowerProduction();
+            Echo("Cargo: " +_cargo.Percentage + "%");
+            Echo("battery Charge: " + _power.ChargePercentage + "%");
+            Echo("power production: " + _power.TotalPowerProduction + "MW");
         }
-
-        private void ShowCargoCapacity()
-        {
-
-        float totalMaxVolume = 0;
-        float totalCurrentVolume = 0;
-
-        _cargoTextPanel.WriteText("Cargo Capacity \n ------------------------ \n", false);
-            foreach (var container in _containers)
-            {
-                var name = container.CustomName;
-                var maxVolume = (float)container.GetInventory().MaxVolume*1000;
-                var currentVolume = (float)container.GetInventory().CurrentVolume*1000;
-
-                _cargoTextPanel.WriteText("\n" + name + ": " + currentVolume + " / " + maxVolume + " l", true);
-                totalMaxVolume += maxVolume;
-                totalCurrentVolume += currentVolume;
-            }
-           
-            _cargoTextPanel.WriteText(
-                "\n------------------------\n Total: " + totalCurrentVolume + " / " + totalMaxVolume + " l", true);
-        }
-
 
     }
 }
